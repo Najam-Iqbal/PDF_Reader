@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 
-def extract_table_images(page):
+def extract_table_images(page, doc):
     # Extract tables as images
     images = []
     for img in page.get_images(full=True):
@@ -47,7 +47,7 @@ def display_pdf(pdf_path):
             st.image(image, caption=f"Image {img_index + 1} on Page {page_number + 1}", use_column_width=True)
 
         # Extract and display tables as images
-        table_images = extract_table_images(page)
+        table_images = extract_table_images(page, doc)
         if table_images:
             st.write("Tables and charts on this page:")
         for img_index, img in enumerate(table_images):
