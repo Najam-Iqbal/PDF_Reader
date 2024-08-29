@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Reader</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="pdf-container">
+        <input type="file" id="file-input" />
+        <div id="controls">
+            <button id="prev-page">Previous</button>
+            <button id="next-page">Next</button>
+            <span>Page: <span id="page-num">1</span> / <span id="page-count">1</span></span>
+            <input type="number" id="zoom-level" min="0.1" step="0.1" value="1" />
+            <input type="text" id="search-input" placeholder="Search text" />
+        </div>
+        <div id="pdf-viewer"></div>
+    </div>
+
+    <!-- PDF.js library -->
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
