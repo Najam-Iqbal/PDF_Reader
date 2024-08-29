@@ -4,7 +4,6 @@ from PIL import Image
 import io
 import base64  # Import base64 for encoding image data
 
-# Function to display PDF content with selectable text and images
 def display_pdf_content(pdf_path):
     doc = fitz.open(pdf_path)
     
@@ -14,7 +13,7 @@ def display_pdf_content(pdf_path):
         # Extract text and HTML structure
         html_content = page.get_text("html")
         
-        # Extract and render images
+        # Extract images
         images = page.get_images(full=True)
         for img_index, img in enumerate(images):
             xref = img[0]
@@ -28,6 +27,7 @@ def display_pdf_content(pdf_path):
             img_url = f"data:image/png;base64,{img_base64}"
             
             # Replace image placeholders in the HTML with actual image URLs
+            # Adjust the placeholder to match actual format used in your HTML
             img_placeholder = f'data:image/jpeg;base64,{base_image["image"].decode("utf-8")}'
             html_content = html_content.replace(img_placeholder, img_url)
         
@@ -36,7 +36,6 @@ def display_pdf_content(pdf_path):
 
     doc.close()
 
-# Streamlit app
 def main():
     st.title("Interactive PDF Reader")
 
