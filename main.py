@@ -6,12 +6,13 @@ import io
 # Function to display PDF content with selectable text and images
 def display_pdf_content(pdf_path):
     doc = fitz.open(pdf_path)
+    
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)
         
         # Extract text and HTML structure
         html_content = page.get_text("html")
-
+        
         # Extract and render images
         images = page.get_images(full=True)
         for img_index, img in enumerate(images):
@@ -20,10 +21,17 @@ def display_pdf_content(pdf_path):
             image_bytes = base_image["image"]
             img = Image.open(io.BytesIO(image_bytes))
             img_path = f"temp_image_{page_num}_{img_index}.png"
-            img.save(img_path)
-
-            # Replace image placeholders in the HTML with actual image paths
-            html_content = html_content.replace(f'src="data:image/jpeg;base64,{base_image["image"]}"', f'src="{img_path}"')
+            
+            # Use an in-memory buffer instead of saving to disk
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            img_data = buf.getvalue()
+            
+            # Generate an image URL for the in-memory image
+            img_url = f"data:image/png;base64,{base64.b64encode(img_data).decode()}"
+            
+            # Replace image placeholders in the HTML with actual image URLs
+            html_content = html_content.replace(f'src="data:image/jpeg;base64,{base_image["image"].decode()}"', f'src="{img_url}"')
         
         # Display the HTML content
         st.components.v1.html(html_content, height=800, scrolling=True)
