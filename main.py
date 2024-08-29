@@ -20,18 +20,16 @@ def display_pdf_content(pdf_path):
             xref = img[0]
             base_image = doc.extract_image(xref)
             image_bytes = base_image["image"]
-            img = Image.open(io.BytesIO(image_bytes))
             
-            # Use an in-memory buffer instead of saving to disk
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            img_data = buf.getvalue()
+            # Convert image bytes to Base64
+            img_base64 = base64.b64encode(image_bytes).decode('utf-8')
             
-            # Generate an image URL for the in-memory image
-            img_url = f"data:image/png;base64,{base64.b64encode(img_data).decode()}"
+            # Generate an image URL for the Base64 image data
+            img_url = f"data:image/png;base64,{img_base64}"
             
             # Replace image placeholders in the HTML with actual image URLs
-            html_content = html_content.replace(f'src="data:image/jpeg;base64,{base_image["image"].decode()}"', f'src="{img_url}"')
+            img_placeholder = f'data:image/jpeg;base64,{base_image["image"].decode("utf-8")}'
+            html_content = html_content.replace(img_placeholder, img_url)
         
         # Display the HTML content
         st.components.v1.html(html_content, height=800, scrolling=True)
