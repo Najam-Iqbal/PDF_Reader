@@ -10,21 +10,22 @@ def display_pdf(pdf_path):
         for page_number in range(num_pages):
             page = pdf.pages[page_number]
             
-            # Render text and images
+            # Render text
             text = page.extract_text()
-            images = page.images
-
-            # Display text
             st.write(f"### Page {page_number + 1}")
             st.write(text)
 
-            # Display images
-            for img in images:
-                img_bbox = img['bbox']
+            # Extract and display images
+            for img in page.images:
+                x0, top, x1, bottom = img['bbox']
                 im = page.to_image()
-                im = im.crop(img_bbox)
+                im = im.crop((x0, top, x1, bottom))
+                
+                # Save image to a BytesIO object for display
                 img_byte_arr = io.BytesIO()
                 im.save(img_byte_arr, format='PNG')
+                img_byte_arr.seek(0)
+                
                 st.image(img_byte_arr, caption=f"Image on Page {page_number + 1}", use_column_width=True)
                 
         # Display total number of pages
