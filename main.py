@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 from PIL import Image
 import io
+import base64  # Import base64 for encoding image data
 
 # Function to display PDF content with selectable text and images
 def display_pdf_content(pdf_path):
@@ -20,7 +21,6 @@ def display_pdf_content(pdf_path):
             base_image = doc.extract_image(xref)
             image_bytes = base_image["image"]
             img = Image.open(io.BytesIO(image_bytes))
-            img_path = f"temp_image_{page_num}_{img_index}.png"
             
             # Use an in-memory buffer instead of saving to disk
             buf = io.BytesIO()
