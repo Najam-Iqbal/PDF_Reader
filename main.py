@@ -16,10 +16,10 @@ def display_pdf_content(pdf_path):
 
             # Extract and display images
             for img_index, img in enumerate(page.images):
-                x0, y0, x1, y1 = img['x0'], img['top'], img['x1'], img['bottom']
-                image = page.within_bbox((x0, y0, x1, y1)).to_image()
-                img_bytes = image.crop((x0, y0, x1, y1)).to_bytes()
-                img_pil = Image.open(io.BytesIO(img_bytes))
+                # Extract the image's binary content
+                img_obj = pdf.images[img_index]
+                img_data = img_obj["stream"]
+                img_pil = Image.open(io.BytesIO(img_data))
                 st.image(img_pil, caption=f'Image from Page {page_num + 1} - Image {img_index + 1}', use_column_width=True)
 
 # Streamlit app
