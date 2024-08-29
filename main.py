@@ -3,15 +3,21 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 
-def extract_table_images(page, doc):
-    # Extract tables as images
-    images = []
-    for img in page.get_images(full=True):
-        xref = img[0]
-        base_image = doc.extract_image(xref)
-        image_bytes = base_image["image"]
-        images.append(io.BytesIO(image_bytes))
-    return images
+def format_text_blocks(blocks):
+    formatted_text = ""
+    for block in blocks:
+        if block['type'] == 0:  # Text block
+            for line in block['lines']:
+                line_text = ""
+                for span in line['spans']:
+                    # Simple heuristic for indentation
+                    if span['size'] > 14:  # Potential headings
+                        line_text += f"## {span['text']} "
+                    else:
+                        line_text += span['text'] + " "
+                formatted_text += line_text.strip() + "\n"
+            formatted_text += "\n"  # Add extra space between text blocks
+    return formatted_text
 
 def display_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -20,18 +26,9 @@ def display_pdf(pdf_path):
     for page_number in range(num_pages):
         page = doc.load_page(page_number)
         
-        # Extract and display text
+        # Extract and format text
         blocks = page.get_text("dict")['blocks']
-        formatted_text = ""
-        for block in blocks:
-            if block['type'] == 0:  # Text block
-                for line in block['lines']:
-                    for span in line['spans']:
-                        if span['size'] > 14:  # Simple heuristic for headings
-                            formatted_text += f"## {span['text']}\n\n"
-                        else:
-                            formatted_text += f"{span['text']} "
-                    formatted_text += "\n\n"
+        formatted_text = format_text_blocks(blocks)
         st.markdown(f"### Page {page_number + 1}")
         st.markdown(formatted_text)
 
@@ -55,6 +52,16 @@ def display_pdf(pdf_path):
             st.image(image, caption=f"Table/Chart {img_index + 1} on Page {page_number + 1}", use_column_width=True)
 
     st.write(f"Total pages: {num_pages}")
+
+def extract_table_images(page, doc):
+    # Extract tables as images
+    images = []
+    for img in page.get_images(full=True):
+        xref = img[0]
+        base_image = doc.extract_image(xref)
+        image_bytes = base_image["image"]
+        images.append(io.BytesIO(image_bytes))
+    return images
 
 def main():
     st.title('PDF Viewer')
