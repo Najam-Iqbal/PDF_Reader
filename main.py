@@ -1,35 +1,30 @@
 import streamlit as st
-import pdfplumber
+import fitz  # PyMuPDF
 from PIL import Image
 import io
 
 def display_pdf(pdf_path):
-    with pdfplumber.open(pdf_path) as pdf:
-        num_pages = len(pdf.pages)
-        
-        for page_number in range(num_pages):
-            page = pdf.pages[page_number]
-            
-            # Render text
-            text = page.extract_text()
-            st.write(f"### Page {page_number + 1}")
-            st.write(text)
+    doc = fitz.open(pdf_path)
+    num_pages = doc.page_count
 
-            # Extract and display images
-            for img in page.images:
-                x0, top, x1, bottom = img['bbox']
-                im = page.to_image()
-                im = im.crop((x0, top, x1, bottom))
-                
-                # Save image to a BytesIO object for display
-                img_byte_arr = io.BytesIO()
-                im.save(img_byte_arr, format='PNG')
-                img_byte_arr.seek(0)
-                
-                st.image(img_byte_arr, caption=f"Image on Page {page_number + 1}", use_column_width=True)
-                
-        # Display total number of pages
-        st.write(f"Total pages: {num_pages}")
+    for page_number in range(num_pages):
+        page = doc.load_page(page_number)
+        
+        # Render text
+        text = page.get_text()
+        st.write(f"### Page {page_number + 1}")
+        st.write(text)
+
+        # Render images
+        image_list = page.get_images(full=True)
+        for img_index, img in enumerate(image_list):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image = Image.open(io.BytesIO(image_bytes))
+            st.image(image, caption=f"Image {img_index + 1} on Page {page_number + 1}", use_column_width=True)
+
+    st.write(f"Total pages: {num_pages}")
 
 def main():
     st.title('PDF Viewer')
