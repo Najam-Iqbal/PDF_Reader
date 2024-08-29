@@ -10,13 +10,16 @@ def display_pdf(pdf_path):
     for page_number in range(num_pages):
         page = doc.load_page(page_number)
         
-        # Render text
-        text = page.get_text()
-        st.write(f"### Page {page_number + 1}")
-        st.write(text)
+        # Render text with proper paragraph formatting
+        text = page.get_text("text")
+        formatted_text = text.replace('\n', '  \n')  # Convert line breaks to markdown line breaks
+        st.markdown(f"### Page {page_number + 1}")
+        st.markdown(formatted_text)
 
         # Render images
         image_list = page.get_images(full=True)
+        if image_list:
+            st.write("Images on this page:")
         for img_index, img in enumerate(image_list):
             xref = img[0]
             base_image = doc.extract_image(xref)
