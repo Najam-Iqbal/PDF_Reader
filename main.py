@@ -3,6 +3,19 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 
+def format_text_blocks(blocks):
+    formatted_text = ""
+    for block in blocks:
+        if block['type'] == 0:  # Text block
+            for line in block['lines']:
+                for span in line['spans']:
+                    if span['size'] > 14:  # Simple heuristic for headings
+                        formatted_text += f"## {span['text']}\n\n"
+                    else:
+                        formatted_text += f"{span['text']} "
+                formatted_text += "\n\n"
+    return formatted_text
+
 def display_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     num_pages = doc.page_count
@@ -10,9 +23,9 @@ def display_pdf(pdf_path):
     for page_number in range(num_pages):
         page = doc.load_page(page_number)
         
-        # Render text with proper paragraph formatting
-        text = page.get_text("text")
-        formatted_text = text.replace('\n', '  \n')  # Convert line breaks to markdown line breaks
+        # Extract and format text
+        blocks = page.get_text("dict")['blocks']
+        formatted_text = format_text_blocks(blocks)
         st.markdown(f"### Page {page_number + 1}")
         st.markdown(formatted_text)
 
