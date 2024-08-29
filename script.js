@@ -101,8 +101,7 @@ function searchInPage(page) {
         const pageText = textItems.map(item => item.str).join(' ').toLowerCase();
         
         if (pageText.includes(searchText)) {
-            // Highlight search results (basic implementation, you may need to improve this)
-            // You can use a library or custom logic to highlight text within the canvas.
+            // Basic search result logging; highlighting requires additional logic
             console.log(`Found "${searchText}" on page ${currentPage}`);
         } else {
             console.log(`"${searchText}" not found on page ${currentPage}`);
