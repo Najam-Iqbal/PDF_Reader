@@ -1,72 +1,48 @@
-import PySimpleGUI as sg
-import fitz  # PyMuPDF
+import streamlit as st
+import pdfplumber
 from PIL import Image
 import io
-import base64
 
-def get_image_base64(image_bytes):
-    img_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    return f"data:image/png;base64,{img_base64}"
-
-def display_pdf_content(pdf_path):
-    doc = fitz.open(pdf_path)
-    
-    layout = []
-    
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        html_content = page.get_text("html")
-
-        # Extract images
-        images = page.get_images(full=True)
-        for img_index, img in enumerate(images):
-            xref = img[0]
-            base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
+def display_pdf(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        num_pages = len(pdf.pages)
+        
+        for page_number in range(num_pages):
+            page = pdf.pages[page_number]
             
-            # Convert image bytes to Base64
-            img_url = get_image_base64(image_bytes)
-            
-            # Replace image placeholders in the HTML with actual image URLs
-            img_placeholder = f'data:image/jpeg;base64,{base_image["image"].decode("utf-8")}'
-            html_content = html_content.replace(img_placeholder, img_url)
+            # Render text and images
+            text = page.extract_text()
+            images = page.images
 
-        # Display HTML content as a part of the GUI layout
-        layout.append([sg.Text(f"Page {page_num + 1}", font='Any 15')])
-        layout.append([sg.Text(html_content, size=(80, 20))])
+            # Display text
+            st.write(f"### Page {page_number + 1}")
+            st.write(text)
 
-    doc.close()
-
-    # Create the PySimpleGUI window
-    window = sg.Window("Interactive PDF Reader", layout)
-
-    # Event loop for window interaction
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-
-    window.close()
+            # Display images
+            for img in images:
+                img_bbox = img['bbox']
+                im = page.to_image()
+                im = im.crop(img_bbox)
+                img_byte_arr = io.BytesIO()
+                im.save(img_byte_arr, format='PNG')
+                st.image(img_byte_arr, caption=f"Image on Page {page_number + 1}", use_column_width=True)
+                
+        # Display total number of pages
+        st.write(f"Total pages: {num_pages}")
 
 def main():
-    layout = [
-        [sg.Text("Upload your PDF file")],
-        [sg.Input(), sg.FileBrowse(file_types=(("PDF Files", "*.pdf"),))],
-        [sg.Button("Load PDF")]
-    ]
+    st.title('PDF Viewer')
     
-    window = sg.Window("PDF Reader", layout)
-
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        elif event == "Load PDF":
-            pdf_path = values[0]
-            if pdf_path:
-                display_pdf_content(pdf_path)
-
-    window.close()
+    # Upload PDF
+    uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+    
+    if uploaded_file:
+        # Save the uploaded file to a temporary location
+        with open("temp.pdf", "wb") as f:
+            f.write(uploaded_file.read())
+        
+        # Display the PDF
+        display_pdf("temp.pdf")
 
 if __name__ == "__main__":
     main()
