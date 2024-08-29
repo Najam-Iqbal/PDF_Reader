@@ -1,7 +1,7 @@
 import streamlit as st
 import fitz  # PyMuPDF
 
-# Function to display PDF with higher resolution
+# Function to display PDF with higher resolution and responsive layout
 def display_pdf(pdf_path, zoom=2):
     doc = fitz.open(pdf_path)
     for page_num in range(len(doc)):
@@ -9,6 +9,8 @@ def display_pdf(pdf_path, zoom=2):
         # Increase resolution by setting a higher zoom factor
         pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
         img = pix.tobytes("png")
+        
+        # Display the image with Streamlit
         st.image(img, caption=f'Page {page_num + 1}', use_column_width=True)
     doc.close()
 
@@ -28,8 +30,9 @@ def main():
         st.success("PDF uploaded successfully!")
         st.write("Opening PDF...")
         
-        # Display the PDF with improved resolution
+        # Display the PDF with improved resolution and responsive layout
         display_pdf(pdf_path, zoom=3)  # Adjust zoom factor as needed
 
 if __name__ == "__main__":
     main()
+h
