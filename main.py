@@ -3,6 +3,16 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 
+def extract_images_from_page(page, doc):
+    # Extract images from the page
+    images = []
+    for img in page.get_images(full=True):
+        xref = img[0]
+        base_image = doc.extract_image(xref)
+        image_bytes = base_image["image"]
+        images.append(io.BytesIO(image_bytes))
+    return images
+
 def format_text_blocks(blocks):
     formatted_text = ""
     for block in blocks:
@@ -33,35 +43,14 @@ def display_pdf(pdf_path):
         st.markdown(formatted_text)
 
         # Extract and display images
-        image_list = page.get_images(full=True)
-        if image_list:
-            st.write("Images on this page:")
-        for img_index, img in enumerate(image_list):
-            xref = img[0]
-            base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
-            image = Image.open(io.BytesIO(image_bytes))
+        images = extract_images_from_page(page, doc)
+        if images:
+            st.write("Images (including tables and charts) on this page:")
+        for img_index, img in enumerate(images):
+            image = Image.open(img)
             st.image(image, caption=f"Image {img_index + 1} on Page {page_number + 1}", use_column_width=True)
 
-        # Extract and display tables as images
-        table_images = extract_table_images(page, doc)
-        if table_images:
-            st.write("Tables and charts on this page:")
-        for img_index, img in enumerate(table_images):
-            image = Image.open(img)
-            st.image(image, caption=f"Table/Chart {img_index + 1} on Page {page_number + 1}", use_column_width=True)
-
     st.write(f"Total pages: {num_pages}")
-
-def extract_table_images(page, doc):
-    # Extract tables as images
-    images = []
-    for img in page.get_images(full=True):
-        xref = img[0]
-        base_image = doc.extract_image(xref)
-        image_bytes = base_image["image"]
-        images.append(io.BytesIO(image_bytes))
-    return images
 
 def main():
     st.title('PDF Viewer')
