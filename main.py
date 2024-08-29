@@ -1,51 +1,45 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import pdfplumber
 from PIL import Image
 import io
 
-# Function to extract and display text and images from PDF
-def display_pdf_content(pdf_path, zoom=2):
-    try:
-        doc = fitz.open(pdf_path)
-        for page_num in range(len(doc)):
-            page = doc.load_page(page_num)
+# Function to display PDF content (text and images)
+def display_pdf_content(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            st.header(f"Page {page_num + 1}")
 
             # Extract and display text
-            text = page.get_text("text")
-            if text.strip():
+            text = page.extract_text()
+            if text:
                 st.text_area(f"Text from Page {page_num + 1}", text, height=300, key=f"text_area_{page_num}")
 
             # Extract and display images
-            image_list = page.get_images(full=True)
-            for img_index, img in enumerate(image_list):
-                xref = img[0]
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
-                img = Image.open(io.BytesIO(image_bytes))
-                st.image(img, caption=f'Image from Page {page_num + 1} - Image {img_index + 1}', use_column_width=True)
-        
-        doc.close()
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+            for img_index, img in enumerate(page.images):
+                x0, y0, x1, y1 = img['x0'], img['top'], img['x1'], img['bottom']
+                image = page.within_bbox((x0, y0, x1, y1)).to_image()
+                img_bytes = image.crop((x0, y0, x1, y1)).to_bytes()
+                img_pil = Image.open(io.BytesIO(img_bytes))
+                st.image(img_pil, caption=f'Image from Page {page_num + 1} - Image {img_index + 1}', use_column_width=True)
 
 # Streamlit app
 def main():
-    st.title("Enhanced PDF Reader")
+    st.title("PDF Reader")
 
     # Upload PDF file
     uploaded_file = st.file_uploader("Upload your PDF file", type=["pdf"])
-    
+
     if uploaded_file is not None:
-        # Save the uploaded file
+        # Save the uploaded file temporarily
         pdf_path = "temp.pdf"
         with open(pdf_path, "wb") as f:
             f.write(uploaded_file.read())
-        
+
         st.success("PDF uploaded successfully!")
-        st.write("Opening PDF...")
-        
+        st.write("Rendering PDF...")
+
         # Display the PDF content (text and images)
-        display_pdf_content(pdf_path, zoom=2)  # Adjust zoom factor as needed
+        display_pdf_content(pdf_path)
 
 if __name__ == "__main__":
     main()
